@@ -6,6 +6,7 @@ import 'package:flutter_app/tabs/four.dart';
 import '../tabs/first.dart';
 import '../tabs/second.dart';
 import '../tabs/third.dart';
+import '../tabs/six.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -106,10 +107,10 @@ class HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMi
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("每日feed"),
+        title: Text("清单"),
         backgroundColor: Colors.blue,
       ),
-      body: getTabBarView(<Widget>[First(), Second(), Third(), Four()]),
+      body: getTabBarView(<Widget>[Six(), First(), Third(), Four()]),
       // Set the nav drawer
       drawer: getNavDrawer(context),
       bottomNavigationBar: Material(

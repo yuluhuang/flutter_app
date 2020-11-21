@@ -16,12 +16,15 @@ import 'screens/settings.dart';
 import 'app.dart';
 import 'search.dart';
 import './common/web_view.dart';
+import 'pages/demo_page.dart';
+import 'pages/refresh_page.dart';
 
 void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Using tabs',
     theme: mDefaultTheme,
+    // home: new RefreshPage(),
     // home: new LoadingPage(),
     home: HomeScreen(),
     // ignore: missing_return

@@ -1,5 +1,3 @@
-import 'dart:developer';
-import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/common/web_view.dart';
@@ -51,6 +49,7 @@ class FirstState extends State<First> with SingleTickerProviderStateMixin {
         _lists.add(row);
       }
       setState(() {
+        isLoading = false;
         lists = _lists;
         totalPages = (res.data["count"] ~/ pageSize) + 1;
         print(totalPages);
@@ -71,17 +70,21 @@ class FirstState extends State<First> with SingleTickerProviderStateMixin {
     });
     _getData();
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent) {
+      if (isLoading) {
+        return;
+      }
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 300) {
         // print('滑动到了最底部');
+        setState(() {
+          isLoading = true;
+          params["page"] = page;
+        });
         if (page <= totalPages) {
           page++;
           // print('加载更多 pageno:' + pageno.toString());
           // 加载更多
-          setState(() {
-            isLoading = true;
-            params["page"] = page;
-          });
+
           _getData();
         } else {
           // 没有更多了
@@ -197,35 +200,39 @@ class FirstState extends State<First> with SingleTickerProviderStateMixin {
     return Container(
       height: 50,
       color: Colors.amber[colorCodes[index % 3]],
-      child: Center(
-        child: Text(
-          '${lists[index]["title"]}',
-          overflow: TextOverflow.ellipsis,
-          maxLines: 2,
-          style: TextStyle(
-            color: Color.fromRGBO(0, 0, 0, 1.0), //opacity：不透明度
-            fontFamily: 'PingFangBold',
-            fontSize: 15.0,
+      child: Stack(
+        children: [
+          Container(
+            margin: new EdgeInsets.only(right: 33),
+            padding: new EdgeInsets.only(top: 5,left: 5, right: 5, bottom: 5),
+            child: Text(
+              '${lists[index]["title"]}',
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              style: TextStyle(
+                color: Color.fromRGBO(0, 0, 0, 1.0), //opacity：不透明度
+                fontFamily: 'PingFangBold',
+                fontSize: 15.0,
+              ),
+            ),
           ),
-        ),
-        // child: ListTile(
-        //   title: new Text(
-        //     '${lists[index]["title"]}',
-        //     overflow: TextOverflow.ellipsis,
-        //     maxLines: 2,
-        //     style: TextStyle(
-        //       color: Color.fromRGBO(0, 0, 0, 1.0), //opacity：不透明度
-        //       fontFamily: 'PingFangBold',
-        //       fontSize: 15.0,
-        //     ),
-        //   ),
-        //   trailing: new Icon(
-        //     Icons.favorite_border,
-        //     color: Colors.red,
-        //   ),
-        //   onTap: () {
-        //   },
-        // ),
+          Positioned(
+            top: 0,
+            bottom: 0,
+            right: 9,
+            child: Container(
+              alignment: Alignment.center,
+              height: 30.0,
+              width: 30,
+              child: GestureDetector(
+                onTap: () {
+
+                },
+                child: Icon(Icons.favorite_border, color: Colors.red),
+              ),
+            ),
+          )
+        ],
       ),
     );
   }
@@ -236,9 +243,26 @@ class FirstState extends State<First> with SingleTickerProviderStateMixin {
       // appBar: AppBar(
       //   title: Center(child: Text('Sqflite demo', textAlign: TextAlign.center)),
       // ),
-      body: RefreshIndicator(
-        child: _buildList(),
-        onRefresh: _onRefresh,
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            child: _buildList(),
+            onRefresh: _onRefresh,
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              alignment: Alignment.center,
+              height: 17.0,
+              child: Text(
+                isLoading ? '加载中...' : '',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ),
+          )
+        ],
       ),
       resizeToAvoidBottomPadding: false,
     );
