@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 
 // import 'package:english_words/english_words.dart' as prefix0;
 // import 'package:english_words/english_words.dart';
+import 'package:flutter_app/models/Schedule.dart';
+import 'package:flutter_app/database/ScheduleDB.dart';
 
 class Six extends StatelessWidget {
   // This widget is the root of your application.
@@ -55,20 +57,60 @@ List<TaskData> taskData = [
 ];
 
 class RandomWordsState extends State<RandomWorks> {
-  final _suggestions = <TaskData>[];
-  final _saved = new Set<TaskData>();
+  final _suggestions = <Schedule>[];
+  final _saved = new Set<Schedule>();
   final _biggerFront = const TextStyle(fontSize: 18.0);
+
+  var scheduleDB = new ScheduleDB();
+
+  // Insert a dog into the database (在数据库插入一条狗狗的数据)
 
   get() async {
 //    Response response = await Dio().post(ApiConfig.get_random_feed);
 //    print(response);
+    var now = DateTime.now();
+    var date = '${now.year}-${now.month}-${now.day}';
+    List<Schedule> schedules = await scheduleDB.getByDate(date);
+    if (schedules.length != 0) {
+      // TODO tip
+      // return;
+      await scheduleDB.deleteAll();
+    }
+    taskData.forEach((task) async {
+      var fido = Schedule(
+          // id: 1,
+          name: task.title,
+          date: date,
+          integral: task.integral,
+          progress: 0);
+      print(task);
+      await scheduleDB.insertSchedule(fido);
+    });
+    List<Schedule> ss = await scheduleDB.schedules();
+    _suggestions.clear();
+
+    setState(() {
+      _suggestions.addAll(ss);
+    });
+    // TODO 如何触发页边更新
+  }
+
+  getData() async {
+    List<Schedule> schedules = await scheduleDB.schedules();
+    print(schedules);
+    _suggestions.addAll(schedules);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
   }
 
   int count = 0;
 
   @override
   Widget build(BuildContext context) {
-    _suggestions.addAll(taskData);
     return new Scaffold(
       body: Stack(children: [
         MediaQuery.removePadding(
@@ -78,7 +120,9 @@ class RandomWordsState extends State<RandomWorks> {
         )
       ]),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {},
+        onPressed: () {
+          this.get();
+        },
         tooltip: 'Increment',
         child: new Text(count.toString()), // TODO change int
       ),
@@ -90,39 +134,38 @@ class RandomWordsState extends State<RandomWorks> {
         itemCount: _suggestions.length * 2,
         // padding: const EdgeInsets.all(16.0),
         itemBuilder: (context, i) {
-      if (i.isOdd) {
-        return new Divider(
-          height: 1,
-        );
-      }
-      final index = i ~/ 2;
-      if (index >= _suggestions.length) {
-        _suggestions.addAll(taskData);
-      }
-      // return Ink(color: Colors.lightGreen, child: _buildRow(_suggestions[index]));
-      return Container(
-        // margin: EdgeInsets.all(0.0),
-        decoration: new BoxDecoration(
-            color: _saved.contains(_suggestions[index])
-                ? Colors.grey[50]
-                : Colors.white),
-        // margin: const EdgeInsets.symmetric(vertical: 2),
-        // color: Colors.white, // if current item is selected show blue color
-        child: _buildRow(_suggestions[index]),
-      );
-    });
+          if (i.isOdd) {
+            return new Divider(
+              height: 1,
+            );
+          }
+          final index = i ~/ 2;
+          if (index >= _suggestions.length) {
+            // _suggestions.addAll(taskData);
+          }
+          // return Ink(color: Colors.lightGreen, child: _buildRow(_suggestions[index]));
+          return Container(
+            // margin: EdgeInsets.all(0.0),
+            decoration: new BoxDecoration(
+                color: _saved.contains(_suggestions[index])
+                    ? Colors.grey[50]
+                    : Colors.white),
+            // margin: const EdgeInsets.symmetric(vertical: 2),
+            // color: Colors.white, // if current item is selected show blue color
+            child: _buildRow(_suggestions[index]),
+          );
+        });
   }
 
-  Widget _buildRow(TaskData task) {
+  Widget _buildRow(Schedule task) {
     final alreadySaved = _saved.contains(task);
 
     return new ListTile(
       leading: Container(
         decoration: new BoxDecoration(
             // borderRadius: BorderRadius.circular(17), /// 圆角
-            border: Border(right: BorderSide(color: Colors.grey[200], width: 1))
-
-            ),
+            border:
+                Border(right: BorderSide(color: Colors.grey[200], width: 1))),
         width: 42,
         child: Row(
           children: [
@@ -143,7 +186,7 @@ class RandomWordsState extends State<RandomWorks> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
-                task.title,
+                task.name,
                 style: _biggerFront,
               ),
             ],
@@ -165,7 +208,7 @@ class RandomWordsState extends State<RandomWorks> {
       //   color: alreadySaved ? Colors.red : null,
       // ),
       onTap: () {
-        this.get();
+        // this.get();
         setState(() {
           if (alreadySaved) {
             _saved.remove(task);
